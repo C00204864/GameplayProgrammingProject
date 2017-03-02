@@ -11,7 +11,9 @@ string toString(T number)
 
 GLuint	vsid,		// Vertex Shader ID
 		fsid,		// Fragment Shader ID
+	    fsid2,
 		progID,		// Program ID
+		progID2,
 		vao = 0,	// Vertex Array ID
 		vbo,		// Vertex Buffer ID
 		vib,		// Vertex Index Buffer
@@ -112,19 +114,19 @@ void Game::initialize()
 	font.loadFromFile(".//Assets//Fonts//BBrick.ttf");
 	txtGameOver.setColor(sf::Color(0, 255, 0, 170));
 	txtGameOver.setCharacterSize(60);
-	txtGameOver.setPosition(210.f, 250.f);
+	txtGameOver.setPosition(210.f, 200.f);
 	txtGameOver.setString("Game Over");
 	txtGameOver.setFont(font);
 
-	txtGameOverInstructions.setColor(sf::Color(0, 255, 0, 170));
+	txtGameOverInstructions.setColor(sf::Color(255, 0, 0, 170));
 	txtGameOverInstructions.setCharacterSize(20);
-	txtGameOverInstructions.setPosition(120.f, 330.f);
+	txtGameOverInstructions.setPosition(120.f, 280.f);
 	txtGameOverInstructions.setString("Press Escape To Quit Or Enter To Play Again");
 	txtGameOverInstructions.setFont(font);
 
-	txtTimeEnd.setColor(sf::Color(0, 255, 0, 170));
+	txtTimeEnd.setColor(sf::Color(0, 0, 255, 170));
 	txtTimeEnd.setCharacterSize(20);
-	txtTimeEnd.setPosition(350.f, 360.f);
+	txtTimeEnd.setPosition(350.f, 310.f);
 	txtTimeEnd.setFont(font);
 
 	srand(time(0));
@@ -226,12 +228,37 @@ void Game::initialize()
 		//"	fColor = color - texture2D(f_texture, uv);"
 		//"	fColor = color;"
 		"}"; //Fragment Shader Src
+	const char* fs_src2 =
+		"#version 400\n\r"
+		""
+		"uniform sampler2D f_texture;"
+		""
+		"in vec4 color;"
+		"in vec2 uv;"
+		""
+		"out vec4 fColor;"
+		""
+		"void main() {"
+		//"	vec4 lightColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); "
+		//"	fColor = vec4(0.50f, 0.50f, 0.50f, 1.0f);"
+		//"	fColor = texture2D(f_texture, uv);"
+		//"	fColor = color * texture2D(f_texture, uv);"
+		//"	fColor = lightColor * texture2D(f_texture, uv);"
+		//"	fColor = texture2D(f_texture, uv);"
+		//"	fColor = color - texture2D(f_texture, uv);"
+		"	fColor = color;"
+		"}"; //Fragment Shader Src
+
 
 	DEBUG_MSG("Setting Up Fragment Shader");
 
 	fsid = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fsid, 1, (const GLchar**)&fs_src, NULL);
 	glCompileShader(fsid);
+
+	fsid2 = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fsid2, 1, (const GLchar**)&fs_src2, NULL);
+	glCompileShader(fsid2);
 
 	// Check is Shader Compiled
 	glGetShaderiv(fsid, GL_COMPILE_STATUS, &isCompiled);
@@ -246,13 +273,43 @@ void Game::initialize()
 	}
 
 	DEBUG_MSG("Setting Up and Linking Shader");
+
+	glGetShaderiv(fsid2, GL_COMPILE_STATUS, &isCompiled);
+
+	if (isCompiled == GL_TRUE) {
+		DEBUG_MSG("Fragment Shader Compiled");
+		isCompiled = GL_FALSE;
+	}
+	else
+	{
+		DEBUG_MSG("ERROR: Fragment Shader Compilation Error");
+	}
+
+	DEBUG_MSG("Setting Up and Linking Shader");
+
 	progID = glCreateProgram();
 	glAttachShader(progID, vsid);
 	glAttachShader(progID, fsid);
 	glLinkProgram(progID);
 
+	progID2 = glCreateProgram();
+	glAttachShader(progID2, vsid);
+	glAttachShader(progID2, fsid2);
+	glLinkProgram(progID2);
+
 	// Check is Shader Linked
 	glGetProgramiv(progID, GL_LINK_STATUS, &isLinked);
+
+	if (isLinked == 1) {
+		DEBUG_MSG("Shader Linked");
+	}
+	else
+	{
+		DEBUG_MSG("ERROR: Shader Link Error");
+	}
+
+	// Check is Shader Linked
+	glGetProgramiv(progID2, GL_LINK_STATUS, &isLinked);
 
 	if (isLinked == 1) {
 		DEBUG_MSG("Shader Linked");
@@ -366,8 +423,11 @@ void Game::unload()
 #endif
 	glDetachShader(progID, vsid);	// Shader could be used with more than one progID
 	glDetachShader(progID, fsid);	// ..
+	glDetachShader(progID2, vsid);	// Shader could be used with more than one progID
+	glDetachShader(progID2, fsid2);
 	glDeleteShader(vsid);			// Delete Vertex Shader
-	glDeleteShader(fsid);			// Delete Fragment Shader
+	glDeleteShader(fsid);
+	glDeleteShader(fsid2);// Delete Fragment Shader
 	glDeleteProgram(progID);		// Delete Shader
 	glDeleteBuffers(1, &vbo);		// Delete Vertex Buffer
 	glDeleteBuffers(1, &vib);		// Delete Vertex Index Buffer
@@ -496,8 +556,8 @@ void Game::renderGame()
 
 	Text text(hud, font);
 
-	text.setColor(sf::Color(0, 255, 0, 170));
-	text.setPosition(5.f, 0.f);
+	text.setColor(sf::Color(0, 255, 255, 255));
+	text.setPosition(350.f, 0.f);
 	text.setCharacterSize(30);
 
 	window.draw(text);
@@ -526,12 +586,15 @@ void Game::renderGame()
 	mvpID = glGetUniformLocation(progID, "sv_mvp");
 	if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
 	drawIndividual(model);
+	drawIndividual(leftWall);
+	drawIndividual(rightWall);
+	glUseProgram(progID2);
 	for (int i = 0; i < enemyBlocks.size(); i++)
 	{
 		drawIndividual(enemyBlocks.at(i));
 	}
-	drawIndividual(leftWall);
-	drawIndividual(rightWall);
+	
+	
 
 
 	window.display();
