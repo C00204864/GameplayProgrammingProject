@@ -102,6 +102,10 @@ void Game::run()
 
 void Game::initialize()
 {
+	backingTrackBuffer.loadFromFile(".//Assets//BackingTrack.wav");
+	backingTrack.setBuffer(backingTrackBuffer);
+	backingTrack.setLoop(true);
+	backingTrack.play();
 	timeTotal = 0.f;
 	gameState = GameState::Playing;
 	speed = BASE_SPEED;

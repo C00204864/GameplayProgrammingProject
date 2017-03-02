@@ -14,6 +14,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
+#include <SFML\Audio.hpp>
 
 #include <Debug.h>
 
@@ -79,5 +80,8 @@ private:
 
 	sf::Clock clock;
 	sf::Time timeSinceLastUpdate;
+
+	sf::SoundBuffer backingTrackBuffer;
+	sf::Sound backingTrack;
 };
 #endif
