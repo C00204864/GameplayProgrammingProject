@@ -40,7 +40,7 @@ int comp_count;					// Component of texture
 
 unsigned char* img_data;		// image data
 
-mat4 mvp, projection, view, model;			// Model View Projection
+mat4 mvp, projection, view, model, leftWall, rightWall;			// Model View Projection
 
 std::vector<mat4> enemyBlocks;
 
@@ -102,14 +102,10 @@ void Game::run()
 
 void Game::initialize()
 {
-
 	timeTotal = 0.f;
 	gameState = GameState::Playing;
-
 	speed = BASE_SPEED;
-
 	font.loadFromFile(".//Assets//Fonts//BBrick.ttf");
-
 	txtGameOver.setColor(sf::Color(0, 255, 0, 170));
 	txtGameOver.setCharacterSize(60);
 	txtGameOver.setPosition(210.f, 250.f);
@@ -136,6 +132,8 @@ void Game::initialize()
 		model[3][0] = randomX();
 		enemyBlocks.push_back(model);
 	}
+	leftWall = glm::scale(glm::translate(leftWall, glm::vec3(-12, 0, 0)), glm::vec3(1, 1, 10000));
+	rightWall = glm::scale(glm::translate(rightWall, glm::vec3(12, 0, 0)), glm::vec3(1, 1, 10000));
 	isRunning = true;
 	GLint isCompiled = 0;
 	GLint isLinked = 0;
@@ -354,6 +352,7 @@ void Game::render()
 	default:
 		break;
 	}
+	
 }
 
 void Game::unload()
@@ -522,12 +521,13 @@ void Game::renderGame()
 	if (textureID < 0) { DEBUG_MSG("textureID not found"); }
 	mvpID = glGetUniformLocation(progID, "sv_mvp");
 	if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
-
 	drawIndividual(model);
 	for (int i = 0; i < enemyBlocks.size(); i++)
 	{
 		drawIndividual(enemyBlocks.at(i));
 	}
+	drawIndividual(leftWall);
+	drawIndividual(rightWall);
 
 
 	window.display();
